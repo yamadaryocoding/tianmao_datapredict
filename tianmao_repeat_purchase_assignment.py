@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 # --- 0. 全局配置与实验开关 ---
 print("--- 0. 全局配置与实验开关 ---")
-DATA_PATH = './data_format1/'
+DATA_PATH = './'
 FILE_USER_LOG_PART = DATA_PATH + 'user_log_format1.csv'
 FILE_USER_INFO = DATA_PATH + 'user_info_format1.csv'
 FILE_TRAIN_ORIG = DATA_PATH + 'train_format1.csv'
@@ -490,8 +490,46 @@ if not common_cols and (not X.empty and not X_submission.empty) : # Check if com
 elif not common_cols and (X.empty or X_submission.empty):
      raise ValueError("X 或 X_submission 为空。请检查之前的步骤。")
 
+# ... (代码在 APPLY_RFE 逻辑之后, X 和 X_submission 列对齐之后) ...
+
 X, X_submission = X[common_cols], X_submission[common_cols]
 print(f"最终用于建模的训练特征形状: {X.shape}")
+print(f"最终用于建模的测试特征形状: {X_submission.shape}") # 新增打印测试集形状
+
+# ++++++++++++++++ 新增代码：输出处理后的数据 ++++++++++++++++
+print("\n--- 输出处理后的数据到CSV文件 ---")
+try:
+    # 输出处理后的训练集特征 X
+    processed_train_X_filename = 'processed_train_X.csv'
+    X.to_csv(processed_train_X_filename, index=False)
+    print(f"处理后的训练集特征 X 已保存到: {processed_train_X_filename}")
+
+    # 输出处理后的训练集标签 y
+    # y 是一个 Series, 可以转换为 DataFrame 输出，或者直接输出 Series
+    processed_train_y_filename = 'processed_train_y.csv'
+    y.to_csv(processed_train_y_filename, index=False, header=['label']) # 将Series保存为单列CSV，并指定列名
+    print(f"处理后的训练集标签 y 已保存到: {processed_train_y_filename}")
+
+    # 输出处理后的测试集特征 X_submission
+    processed_test_X_submission_filename = 'processed_test_X_submission.csv'
+    X_submission.to_csv(processed_test_X_submission_filename, index=False)
+    print(f"处理后的测试集特征 X_submission 已保存到: {processed_test_X_submission_filename}")
+
+    # 如果您还想保留原始的 user_id 和 merchant_id 用于后续分析对应关系
+    # 您可以在 final_train_df 和 final_test_df 分裂出 X, y, X_submission 之前
+    # 或者在这里重新合并它们（如果内存允许并且有此需求）
+    # 例如，输出包含ID的完整处理后训练集：
+    # temp_processed_train_with_ids = final_train_df[ ['user_id', 'merchant_id','label'] + X.columns.tolist() ]
+    # temp_processed_train_with_ids.to_csv('processed_train_full.csv', index=False)
+    # print("包含ID的完整处理后训练集已保存到: processed_train_full.csv")
+
+    # temp_processed_test_with_ids = final_test_df[ ['user_id', 'merchant_id'] + X_submission.columns.tolist() ]
+    # temp_processed_test_with_ids.to_csv('processed_test_full.csv', index=False)
+    # print("包含ID的完整处理后测试集已保存到: processed_test_full.csv")
+
+except Exception as e:
+    print(f"输出处理后的数据时发生错误: {e}")
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 # 5.2 类别不平衡处理 & 5.2.1 超参数调优 & 5.3 模型训练与交叉验证
